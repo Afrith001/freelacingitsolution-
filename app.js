@@ -37,11 +37,19 @@ if (window.lucide) lucide.createIcons();
   const canvas = document.getElementById('bgCanvas');
   const ctx = canvas.getContext('2d');
 
-  const MAX_FRAMES = 90;
-  const MIN_FRAMES = 24;
-  const FRAMES_PER_SEC = 12;
-  const MAX_FRAME_WIDTH = 960;
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const isMobile = window.matchMedia('(max-width: 768px)').matches ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const MAX_FRAMES = isMobile ? 28 : 90;
+  const MIN_FRAMES = isMobile ? 14 : 24;
+  const FRAMES_PER_SEC = isMobile ? 6 : 12;
+  const MAX_FRAME_WIDTH = isMobile ? 480 : 960;
+  const DPR = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+
+  // On mobile, skip the heavy frame-scrub effect entirely and just let the
+  // regular <video> play/scrub directly -- much lighter on CPU/battery.
+  const useFrameExtraction = !isMobile && !prefersReducedMotion;
 
   let frames = [];
   let framesReady = false;
@@ -165,13 +173,15 @@ if (window.lucide) lucide.createIcons();
   }
 
   // Wait for the visible video to have data + 300ms yield before extracting
-  visibleVideo.addEventListener(
-    'loadeddata',
-    () => {
-      setTimeout(extractFrames, 300);
-    },
-    { once: true }
-  );
+  if (useFrameExtraction) {
+    visibleVideo.addEventListener(
+      'loadeddata',
+      () => {
+        setTimeout(extractFrames, 300);
+      },
+      { once: true }
+    );
+  }
 
   // --- scroll progress + RAF loop -------------------------------------------
   function getProgress() {
@@ -181,7 +191,10 @@ if (window.lucide) lucide.createIcons();
     return Math.min(1, Math.max(0, p));
   }
 
-  function tick() {
+  let lastMobileUpdate = 0;
+  const MOBILE_SEEK_INTERVAL = 120; // ms — avoid seeking every single frame on mobile
+
+  function tick(now) {
     const target = getProgress();
     smoothed += (target - smoothed) * 0.12;
 
@@ -192,15 +205,30 @@ if (window.lucide) lucide.createIcons();
       );
       const frame = frames[idx];
       drawCover(frame, frame.width, frame.height);
-    } else if (videoHasFrame) {
+    } else if (videoHasFrame && !isMobile) {
       const duration = visibleVideo.duration;
       if (duration && isFinite(duration)) {
-        const target = smoothed * (duration - 0.05);
-        if (Math.abs(target - lastSeekTime) > 0.04) {
-          lastSeekTime = target;
+        const seekTarget = smoothed * (duration - 0.05);
+        if (Math.abs(seekTarget - lastSeekTime) > 0.04) {
+          lastSeekTime = seekTarget;
           try {
-            visibleVideo.currentTime = Math.max(0, target);
+            visibleVideo.currentTime = Math.max(0, seekTarget);
           } catch (e) {}
+        }
+      }
+    } else if (videoHasFrame && isMobile) {
+      // Throttled + coarser seeking on mobile to save battery/CPU
+      if (now - lastMobileUpdate > MOBILE_SEEK_INTERVAL) {
+        lastMobileUpdate = now;
+        const duration = visibleVideo.duration;
+        if (duration && isFinite(duration)) {
+          const seekTarget = smoothed * (duration - 0.05);
+          if (Math.abs(seekTarget - lastSeekTime) > 0.15) {
+            lastSeekTime = seekTarget;
+            try {
+              visibleVideo.currentTime = Math.max(0, seekTarget);
+            } catch (e) {}
+          }
         }
       }
     }
@@ -208,5 +236,10 @@ if (window.lucide) lucide.createIcons();
     requestAnimationFrame(tick);
   }
 
-  requestAnimationFrame(tick);
+  if (!prefersReducedMotion) {
+    requestAnimationFrame(tick);
+  } else {
+    hidePoster();
+    showVisibleVideoLayer();
+  }
 })();
