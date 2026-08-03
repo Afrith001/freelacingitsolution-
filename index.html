@@ -49,6 +49,15 @@
     .reveal { transition: none !important; transform: none !important; opacity: 1 !important; }
   }
 
+  /* Lighter blur + shorter reveal transitions on mobile for smoother scroll/animation */
+  @media (max-width: 768px) {
+    .backdrop-blur-md { backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+    .reveal { transition-duration: 450ms !important; }
+  }
+
+  /* Hero heading in black */
+  .hero-heading-black { color: #000 !important; }
+
   /* scroll video layer */
   #scroll-video-bg { background: #0a0a0a; }
   #scroll-video-bg img,
@@ -139,7 +148,7 @@
             <div class="reveal mb-5 inline-flex items-center border-l-2 border-white bg-white/15 px-3 py-1.5 backdrop-blur-md" data-delay="150">
               <span class="font-mono text-[11px] uppercase tracking-[0.15em]">50+ Projects Delivered</span>
             </div>
-            <h1 class="reveal text-5xl sm:text-6xl lg:text-7xl font-normal leading-[1.05] tracking-tight text-white drop-shadow-lg" data-delay="280">
+            <h1 class="reveal hero-heading-black text-5xl sm:text-6xl lg:text-7xl font-normal leading-[1.05] tracking-tight drop-shadow-lg" data-delay="280">
               Design. Develop.<br />Deliver.
             </h1>
           </div>
@@ -181,7 +190,7 @@
         <div class="flex flex-1 flex-col justify-end gap-12 md:flex-row md:items-end md:justify-between md:gap-16">
 
           <div class="max-w-xl">
-            <h2 class="reveal text-5xl sm:text-6xl lg:text-7xl font-normal leading-[1.05] tracking-tight text-white drop-shadow-lg" data-delay="180">
+            <h2 class="reveal hero-heading-black text-5xl sm:text-6xl lg:text-7xl font-normal leading-[1.05] tracking-tight drop-shadow-lg" data-delay="180">
               Build something<br />great.
             </h2>
             <p class="reveal mt-6 max-w-md text-sm sm:text-base text-white/80 drop-shadow-md" data-delay="320">
