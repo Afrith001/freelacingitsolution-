@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FREELANCING IT SOLUTION — Build Digital Experiences That Grow Businesses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<style>
+  :root {
+    --bg: #070b0a;
+    --accent: #5ed29c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body { font-family: 'Inter', sans-serif; color: #fff; }
+
+  .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .font-serif-italic { font-family: 'Instrument Serif', serif; font-style: italic; }
+
+  /* Entrance is JS-triggered (via .loaded on body) so it never gets skipped
+     by the browser painting elements before the stylesheet settles. */
+  [data-rise] {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--rise-delay, 0s);
+  }
+  body.loaded [data-rise] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Scroll-triggered entrance for below-the-fold sections (Services,
+     Projects, Contact). Independent of body.loaded so cards animate
+     in as the user scrolls to them, not all at once on page load. */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .section-eyebrow {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .card-hover { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -16px rgba(94, 210, 156, 0.3); }
+
+  .tech-badge {
+    display: inline-block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+
+  .demo-link { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease, border-color 0.25s ease; }
+  .demo-link:hover { transform: translateX(3px); color: var(--accent); border-color: var(--accent); }
+
+  .field-input {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.25s ease, background 0.25s ease;
+  }
+  .field-input::placeholder { color: rgba(255,255,255,0.35); }
+  .field-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.05); }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  .float-card { animation: float 5s ease-in-out infinite; animation-delay: 1.1s; }
+
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 100%;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+
+  .cta-btn { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease, box-shadow 0.25s ease; }
+  .cta-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 30px -8px rgba(94, 210, 156, 0.55); }
+  .cta-btn:active { transform: translateY(0) scale(0.97); }
+  .cta-btn svg { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+  .cta-btn:hover svg { transform: translateX(4px); }
+
+  /* Animated bar-field background — a CSS/JS fallback so the vertical
+     equalizer-style motion always renders, even if the Mux stream fails. */
+  #barField {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 0 2%;
+    opacity: 0.55;
+    mix-blend-mode: screen;
+  }
+  .bar {
+    flex: 1 1 auto;
+    background: linear-gradient(180deg, rgba(94,210,156,0.85), rgba(18,64,58,0.15));
+    border-radius: 2px 2px 0 0;
+    transform-origin: bottom;
+    animation: barPulse ease-in-out infinite;
+  }
+  @keyframes barPulse {
+    0%, 100% { transform: scaleY(var(--bar-min, 0.3)); opacity: 0.5; }
+    50% { transform: scaleY(var(--bar-max, 1)); opacity: 0.9; }
+  }
+
+  #lightBeam {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 44%,
+      rgba(255, 235, 210, 0.9) 49%,
+      rgba(94, 210, 156, 0.8) 51%,
+      transparent 56%,
+      transparent 100%
+    );
+    background-size: 300% 100%;
+    filter: blur(6px);
+    animation: beamSweep 7s ease-in-out infinite;
+  }
+  @keyframes beamSweep {
+    0% { background-position: 130% 0; opacity: 0; }
+    10% { opacity: 1; }
+    45% { background-position: 20% 0; opacity: 1; }
+    60% { opacity: 0; }
+    100% { background-position: -40% 0; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar { animation: none !important; transform: scaleY(0.6) !important; }
+    #lightBeam { animation: none !important; opacity: 0 !important; }
+  }
+
+  /* Readability backdrop: sits behind the headline only, above the
+     bar-field/beam, so no background line ever shows through a letter
+     stroke (e.g. the L in LAUNCH, the G in CODING). */
+  .headline-wrap { position: relative; }
+  .headline-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -8% -6%;
+    background: radial-gradient(ellipse at center, rgba(7,11,10,0.7) 0%, rgba(7,11,10,0.35) 55%, transparent 80%);
+    filter: blur(18px);
+    z-index: -1;
+  }
+
+  .liquid-glass {
+    position: relative;
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 18px 50px rgba(0, 0, 0, 0.25);
+    border-radius: 18px;
+  }
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    padding: 1.4px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  #mobileMenu {
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #mobileMenu.open {
+    transform: translateX(0);
+  }
+  #mobileMenu .mobile-link {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition-delay: var(--m-delay, 0s);
+  }
+  #mobileMenu.open .mobile-link {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-rise] { opacity: 1 !important; transform: none !important; transition: none !important; }
+    [data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .glow-pulse, .float-card { animation: none !important; }
+    #mobileMenu, #mobileMenu .mobile-link { transition: none !important; }
+    .card-hover:hover { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="relative w-full h-screen min-h-[700px] overflow-hidden bg-[#070b0a] text-white">
+
+  <!-- Background video -->
+  <video
+    id="heroVideo"
+    class="absolute inset-0 w-full h-full object-cover opacity-60"
+    autoplay
+    muted
+    loop
+    playsinline
+  ></video>
+
+  <!-- Fallback animated bar-field + light beam (always renders) -->
+  <div id="barField"></div>
+  <div id="lightBeam"></div>
+
+  <!-- Left dark gradient -->
+  <div
+    class="absolute inset-0 pointer-events-none"
+    style="background: linear-gradient(90deg, #070b0a 0%, rgba(7,11,10,0.6) 45%, transparent 80%);"
+  ></div>
+
+  <!-- Bottom-up gradient -->
+  <div
+    class="absolute inset-0 pointer-events-none"
+    style="background: linear-gradient(0deg, #070b0a 0%, transparent 45%);"
+  ></div>
+
+  <!-- Vertical grid lines -->
+  <div class="hidden md:block absolute inset-0 pointer-events-none">
+    <div class="absolute top-0 bottom-0 left-1/4 w-px bg-white/10"></div>
+    <div class="absolute top-0 bottom-0 left-1/2 w-px bg-white/10"></div>
+    <div class="absolute top-0 bottom-0 left-3/4 w-px bg-white/10"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="absolute top-0 left-0 right-0 z-30 px-6 md:px-10 lg:px-20 py-6 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M13 1L24 7V19L13 25L2 19V7L13 1Z" stroke="white" stroke-width="1.4" />
+        <path d="M13 8L18 13L13 18L8 13L13 8Z" fill="white" />
+      </svg>
+      <span class="font-jakarta font-bold text-[15px] tracking-wide">FREELANCING IT SOLUTION</span>
+    </div>
+
+    <nav class="hidden md:flex items-center gap-9">
+      <a href="#" class="nav-link text-[16px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200">SERVICES</a>
+      <a href="#" class="nav-link text-[16px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200">PROJECTS</a>
+      <a href="#" class="nav-link text-[16px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200">ABOUT</a>
+      <a href="#" class="nav-link text-[16px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200">CONTACT</a>
+    </nav>
+
+    <button id="menuOpenBtn" class="md:hidden text-white" aria-label="Open menu">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </header>
+
+  <!-- Mobile menu overlay -->
+  <div id="mobileMenu" class="fixed inset-0 z-50 bg-[#070b0a] flex flex-col">
+    <div class="flex items-center justify-between px-6 py-6">
+      <span class="font-jakarta font-bold text-[15px]">FREELANCING IT SOLUTION</span>
+      <button id="menuCloseBtn" class="text-white" aria-label="Close menu">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="flex-1 flex flex-col items-center justify-center gap-8">
+      <a href="#" class="mobile-link text-[28px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200" style="--m-delay:0.05s;">SERVICES</a>
+      <a href="#" class="mobile-link text-[28px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200" style="--m-delay:0.12s;">PROJECTS</a>
+      <a href="#" class="mobile-link text-[28px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200" style="--m-delay:0.19s;">ABOUT</a>
+      <a href="#" class="mobile-link text-[28px] text-white/90 hover:text-[#5ed29c] transition-colors duration-200" style="--m-delay:0.26s;">CONTACT</a>
+    </div>
+  </div>
+
+  <!-- Hero content -->
+  <main class="relative z-20 h-full flex flex-col items-start justify-start text-left px-6 md:px-16 lg:px-20 pt-28 md:pt-32">
+    <p data-rise style="--rise-delay:0.05s;" class="relative z-30 block pl-[8px] mb-3 font-jakarta font-bold text-[11px] tracking-[0.25em] uppercase text-[#5ed29c] md:absolute md:left-16 md:top-[90px] lg:left-20 lg:top-[95px]">
+      Premium Digital Agency
+    </p>
+
+    <!-- Liquid glass card -->
+    <div data-rise style="--rise-delay:0.18s;" class="liquid-glass float-card w-[200px] h-[200px] mt-6 mb-12 flex flex-col items-start justify-start px-5 py-5 text-left md:absolute md:left-16 lg:left-20 md:top-[145px] lg:top-[155px] md:mt-0 md:mb-0 md:z-20">
+      <span class="text-[14px] text-white/70 mb-2">[ 2026 ]</span>
+      <p class="text-[18px] leading-snug font-medium">
+        Built by <span class="font-serif-italic">Industry</span> Experts
+      </p>
+      <p class="text-[11px] text-white/50 mt-2 leading-relaxed">
+        Real projects, real results, real growth.
+      </p>
+    </div>
+
+    <div class="headline-wrap mt-10 md:mt-[280px]">
+      <h1 data-rise style="--rise-delay:0.3s;" class="font-extrabold uppercase tracking-tight leading-[0.95] text-[40px] md:text-[72px] max-w-4xl">
+        Build Digital Experiences<br />That Grow Businesses<span class="text-[#5ed29c]">.</span>
+      </h1>
+    </div>
+
+    <p data-rise style="--rise-delay:0.42s;" class="text-[14px] text-white/70 max-w-[512px] mt-5 leading-relaxed">
+      Helping startups and businesses build modern websites, AI-powered solutions, Android apps, and business software with premium design, performance, and scalability.
+    </p>
+
+    <div data-rise style="--rise-delay:0.54s;" class="mt-8 flex items-center gap-4 flex-wrap">
+      <button class="cta-btn flex items-center gap-2 rounded-full bg-[#5ed29c] text-[#070b0a] font-jakarta font-bold uppercase text-[13px] tracking-wide px-7 py-3.5">
+        View Our Work
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <button class="cta-btn liquid-glass flex items-center gap-2 rounded-full text-white font-jakarta font-bold uppercase text-[13px] tracking-wide px-7 py-3.5">
+        Start Your Project
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </main>
+
+</div>
+
+<!-- ================= SERVICES ================= -->
+<section id="services" class="relative bg-[#070b0a] px-6 md:px-16 lg:px-20 py-24 md:py-32 overflow-hidden">
+  <div class="hidden md:block absolute inset-0 pointer-events-none">
+    <div class="absolute top-0 bottom-0 left-1/4 w-px bg-white/5"></div>
+    <div class="absolute top-0 bottom-0 left-1/2 w-px bg-white/5"></div>
+    <div class="absolute top-0 bottom-0 left-3/4 w-px bg-white/5"></div>
+  </div>
+
+  <div class="relative z-10">
+    <p data-reveal class="section-eyebrow">What We Do</p>
+    <h2 data-reveal style="--reveal-delay:0.08s;" class="font-extrabold uppercase tracking-tight leading-[0.98] text-[32px] md:text-[52px] max-w-3xl mt-4">
+      Premium Services Built for <span class="font-serif-italic normal-case text-[#5ed29c]">Growth</span><span class="text-[#5ed29c]">.</span>
+    </h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mt-14">
+
+      <div data-reveal style="--reveal-delay:0.05s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">01</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Website Development</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Responsive websites for businesses and startups.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.09s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">02</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Android App Development</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Fast and modern mobile applications.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.13s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">03</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">AI Solutions</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">AI chatbots, automation, and intelligent systems.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.05s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">04</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">SEO Services</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Improve visibility and organic growth.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.09s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">05</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Custom Software</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Tailor-made business software.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.13s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">06</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">POS Software</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Modern billing and sales management.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.05s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">07</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Billing Software</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Professional billing systems.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.09s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">08</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Biometric Attendance</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Attendance management solutions.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.13s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">09</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">Business Automation</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Automate repetitive business tasks.</p>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.17s;" class="liquid-glass card-hover p-7 flex flex-col gap-4">
+        <span class="font-jakarta font-bold text-[12px] text-[#5ed29c] tracking-wide">10</span>
+        <h3 class="font-jakarta font-bold text-[17px] uppercase tracking-wide">API Integration</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Connect third-party platforms securely.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROJECTS ================= -->
+<section id="projects" class="relative bg-[#070b0a] px-6 md:px-16 lg:px-20 py-24 md:py-32 overflow-hidden">
+  <div class="relative z-10">
+    <p data-reveal class="section-eyebrow">Selected Work</p>
+    <h2 data-reveal style="--reveal-delay:0.08s;" class="font-extrabold uppercase tracking-tight leading-[0.98] text-[32px] md:text-[52px] max-w-3xl mt-4">
+      Featured <span class="font-serif-italic normal-case text-[#5ed29c]">Projects</span><span class="text-[#5ed29c]">.</span>
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7 mt-14">
+
+      <div data-reveal style="--reveal-delay:0.05s;" class="liquid-glass card-hover p-8 md:p-10 flex flex-col gap-5">
+        <h3 class="font-jakarta font-extrabold text-[24px] md:text-[28px] uppercase tracking-tight">NEXAVO AI</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">AI-powered productivity platform.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge">AI</span>
+          <span class="tech-badge">Node.js</span>
+          <span class="tech-badge">Vercel</span>
+        </div>
+        <a href="https://nexavo-ai.vercel.app/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start mt-2 border border-white/20 rounded-full px-5 py-2.5 font-jakarta font-bold uppercase text-[12px] tracking-wide">
+          Live Demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.09s;" class="liquid-glass card-hover p-8 md:p-10 flex flex-col gap-5">
+        <h3 class="font-jakarta font-extrabold text-[24px] md:text-[28px] uppercase tracking-tight">FoodCourtNotify</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Restaurant QR ordering and notification platform.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge">Firebase</span>
+          <span class="tech-badge">REST API</span>
+          <span class="tech-badge">Vercel</span>
+        </div>
+        <a href="https://foodcourtnotify.vercel.app/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start mt-2 border border-white/20 rounded-full px-5 py-2.5 font-jakarta font-bold uppercase text-[12px] tracking-wide">
+          Live Demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.05s;" class="liquid-glass card-hover p-8 md:p-10 flex flex-col gap-5">
+        <h3 class="font-jakarta font-extrabold text-[24px] md:text-[28px] uppercase tracking-tight">Apply Zen</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">AI-powered job application platform.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge">AI</span>
+          <span class="tech-badge">Automation</span>
+          <span class="tech-badge">Supabase</span>
+        </div>
+        <a href="https://applyzen.lovable.app/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start mt-2 border border-white/20 rounded-full px-5 py-2.5 font-jakarta font-bold uppercase text-[12px] tracking-wide">
+          Live Demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.09s;" class="liquid-glass card-hover p-8 md:p-10 flex flex-col gap-5">
+        <h3 class="font-jakarta font-extrabold text-[24px] md:text-[28px] uppercase tracking-tight">Happy POS</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Modern Point of Sale and Billing Software.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge">POS</span>
+          <span class="tech-badge">Billing</span>
+          <span class="tech-badge">MongoDB</span>
+        </div>
+        <a href="https://happy-pos.lovable.app/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start mt-2 border border-white/20 rounded-full px-5 py-2.5 font-jakarta font-bold uppercase text-[12px] tracking-wide">
+          Live Demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div data-reveal style="--reveal-delay:0.13s;" class="liquid-glass card-hover p-8 md:p-10 flex flex-col gap-5 md:col-span-2">
+        <h3 class="font-jakarta font-extrabold text-[24px] md:text-[28px] uppercase tracking-tight">Zorix AI</h3>
+        <p class="text-[13px] text-white/60 leading-relaxed">Next-generation AI assistant platform.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge">AI</span>
+          <span class="tech-badge">NLP</span>
+          <span class="tech-badge">GitHub</span>
+        </div>
+        <a href="https://zorixai.lovable.app/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start mt-2 border border-white/20 rounded-full px-5 py-2.5 font-jakarta font-bold uppercase text-[12px] tracking-wide">
+          Live Demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONTACT ================= -->
+<section id="contact" class="relative bg-[#070b0a] px-6 md:px-16 lg:px-20 py-24 md:py-32 overflow-hidden">
+  <div class="hidden md:block absolute inset-0 pointer-events-none">
+    <div class="absolute top-0 bottom-0 left-1/4 w-px bg-white/5"></div>
+    <div class="absolute top-0 bottom-0 left-1/2 w-px bg-white/5"></div>
+    <div class="absolute top-0 bottom-0 left-3/4 w-px bg-white/5"></div>
+  </div>
+
+  <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-10">
+    <div data-reveal class="flex flex-col justify-center">
+      <p class="section-eyebrow">Get In Touch</p>
+      <h2 class="font-extrabold uppercase tracking-tight leading-[0.98] text-[32px] md:text-[48px] max-w-lg mt-4">
+        Let&rsquo;s Build Something <span class="font-serif-italic normal-case text-[#5ed29c]">Amazing</span><span class="text-[#5ed29c]">.</span>
+      </h2>
+      <p class="text-[14px] text-white/60 max-w-md mt-5 leading-relaxed">
+        Ready to build your next project? Let&rsquo;s talk.
+      </p>
+
+      <div class="flex flex-col gap-3 mt-10">
+        <a href="https://instagram.com/freelancing_it.solution" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start text-[13px] text-white/70 font-jakarta font-bold uppercase tracking-wide border-b border-white/15 pb-1">
+          Instagram &mdash; @freelancing_it.solution
+        </a>
+        <a href="https://afrith001.github.io/pro-portfolio/" target="_blank" rel="noopener" class="demo-link inline-flex items-center gap-2 self-start text-[13px] text-white/70 font-jakarta font-bold uppercase tracking-wide border-b border-white/15 pb-1">
+          Portfolio &mdash; View Work
+        </a>
+      </div>
+    </div>
+
+    <div data-reveal style="--reveal-delay:0.1s;" class="liquid-glass p-7 md:p-9">
+      <form id="contactForm" class="flex flex-col gap-4">
+        <input class="field-input" type="text" name="name" placeholder="Name" required />
+        <input class="field-input" type="email" name="email" placeholder="Email" required />
+        <input class="field-input" type="tel" name="phone" placeholder="Phone" />
+        <textarea class="field-input" name="details" rows="4" placeholder="Project Details" required></textarea>
+        <button type="submit" class="cta-btn mt-2 flex items-center justify-center gap-2 rounded-full bg-[#5ed29c] text-[#070b0a] font-jakarta font-bold uppercase text-[13px] tracking-wide px-7 py-3.5">
+          Send Message
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <p id="contactFormNote" class="text-[12px] text-white/50 text-center mt-1" style="min-height:16px;"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="relative bg-[#070b0a] border-t border-white/10 px-6 md:px-16 lg:px-20 py-12">
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+    <div class="flex items-center gap-2">
+      <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
+        <path d="M13 1L24 7V19L13 25L2 19V7L13 1Z" stroke="white" stroke-width="1.4" />
+        <path d="M13 8L18 13L13 18L8 13L13 8Z" fill="white" />
+      </svg>
+      <span class="font-jakarta font-bold text-[14px] tracking-wide">FREELANCING IT SOLUTION</span>
+    </div>
+
+    <nav class="flex flex-wrap items-center gap-6">
+      <a href="#services" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">Services</a>
+      <a href="#projects" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">Projects</a>
+      <a href="#" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">About</a>
+      <a href="#contact" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">Contact</a>
+    </nav>
+
+    <div class="flex items-center gap-6">
+      <a href="https://instagram.com/freelancing_it.solution" target="_blank" rel="noopener" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">Instagram</a>
+      <a href="https://afrith001.github.io/pro-portfolio/" target="_blank" rel="noopener" class="nav-link text-[13px] text-white/60 hover:text-[#5ed29c] transition-colors duration-200 uppercase tracking-wide">Portfolio</a>
+    </div>
+  </div>
+
+  <p class="text-[12px] text-white/35 mt-10">&copy; 2026 Freelancing IT Solution. All rights reserved.</p>
+</footer>
+
+<script>
+  // Generate the animated bar-field
+  (function () {
+    var field = document.getElementById('barField');
+    var count = 90;
+    for (var i = 0; i < count; i++) {
+      var bar = document.createElement('div');
+      bar.className = 'bar';
+      var min = (0.15 + Math.random() * 0.25).toFixed(2);
+      var max = (0.55 + Math.random() * 0.45).toFixed(2);
+      var duration = (1.6 + Math.random() * 2.2).toFixed(2);
+      var delay = (Math.random() * -4).toFixed(2);
+      bar.style.setProperty('--bar-min', min);
+      bar.style.setProperty('--bar-max', max);
+      bar.style.animationDuration = duration + 's';
+      bar.style.animationDelay = delay + 's';
+      bar.style.height = (30 + Math.random() * 55) + '%';
+      field.appendChild(bar);
+    }
+  })();
+
+  // Trigger entrance motion explicitly (avoids animations being skipped
+  // when the browser paints before the stylesheet is fully applied).
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      document.body.classList.add('loaded');
+    });
+  });
+
+  // HLS video setup — if it actually loads and plays, fade the CSS
+  // fallback out so the real footage takes over; otherwise the
+  // animated bar-field + light beam keep the background alive.
+  (function () {
+    var videoSrc = 'https://stream.mux.com/tLkHO1qZoaaQOUeVWo8hEBeGQfySP02EPS02BmnNFyXys.m3u8';
+    var video = document.getElementById('heroVideo');
+    var fallback = document.getElementById('barField');
+    var beam = document.getElementById('lightBeam');
+
+    function onVideoPlaying() {
+      fallback.style.transition = 'opacity 1s ease';
+      beam.style.transition = 'opacity 1s ease';
+      fallback.style.opacity = '0';
+      beam.style.opacity = '0';
+    }
+    function onVideoError() {
+      console.warn('FREELANCING IT SOLUTION hero: background video failed to load, using CSS fallback.');
+    }
+    video.addEventListener('playing', onVideoPlaying);
+    video.addEventListener('error', onVideoError);
+
+    function attach() {
+      if (window.Hls && window.Hls.isSupported()) {
+        var hls = new window.Hls({ enableWorker: false });
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        hls.on(window.Hls.Events.ERROR, onVideoError);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+      } else {
+        onVideoError();
+      }
+    }
+
+    if (window.Hls) {
+      attach();
+    } else {
+      window.addEventListener('load', attach);
+    }
+  })();
+
+  // Mobile menu toggle
+  (function () {
+    var menu = document.getElementById('mobileMenu');
+    var openBtn = document.getElementById('menuOpenBtn');
+    var closeBtn = document.getElementById('menuCloseBtn');
+    var links = document.querySelectorAll('.mobile-link');
+
+    function openMenu() { menu.classList.add('open'); }
+    function closeMenu() { menu.classList.remove('open'); }
+
+    openBtn.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    links.forEach(function (link) {
+      link.addEventListener('click', closeMenu);
+    });
+  })();
+
+  // Scroll-reveal for Services / Projects / Contact sections
+  (function () {
+    var items = document.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window) || !items.length) {
+      items.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    items.forEach(function (el) { observer.observe(el); });
+  })();
+
+  // Contact form — lightweight client-side handling (no backend wired up)
+  (function () {
+    var form = document.getElementById('contactForm');
+    var note = document.getElementById('contactFormNote');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      note.textContent = 'Thanks! Your message has been noted — we\'ll get back to you soon.';
+      note.style.color = '#5ed29c';
+      form.reset();
+    });
+  })();
+</script>
+
+</body>
+</html>
